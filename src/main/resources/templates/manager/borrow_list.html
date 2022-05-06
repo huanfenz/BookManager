@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>图书类型管理</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../layuimini/lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../layuimini/css/public.css" media="all">
+    <script src="../layuimini/lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+    <script src="../layuimini/lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+</head>
+<body>
+<!--编辑弹出框-->
+<div class="site-text" style="margin: 5%; display: none" id="edit_window">
+    <div class="layui-form" style="width: 400px;" lay-filter="editForm">
+        <!--隐藏域，id-->
+        <input type="hidden" id="borrowid" name="borrowid" class="layui-input" value="null">
+        <!--用户id-->
+        <div class="layui-form-item">
+            <label class="layui-form-label">用户名</label>
+            <div class="layui-input-block">
+                <select name="userid" id="edit_userid" lay-search="">
+                    <option value="">请选择用户名</option>
+                </select>
+            </div>
+        </div>
+        <!--书籍id-->
+        <div class="layui-form-item">
+            <label class="layui-form-label">书名</label>
+            <div class="layui-input-block">
+                <select name="bookid" id="edit_bookid" lay-search="">
+                    <option value="">请选择书名</option>
+                </select>
+            </div>
+        </div>
+        <!--借书时间-->
+        <div class="layui-form-item">
+            <label class="layui-form-label">借书时间</label>
+            <div class="layui-input-block">
+                <input type="text" id="borrowtimestr" name="borrowtimestr" value="" placeholder="请输入描述" class="layui-input">
+            </div>
+        </div>
+        <!--还书时间-->
+        <div class="layui-form-item">
+            <label class="layui-form-label">还书时间</label>
+            <div class="layui-input-block">
+                <input type="text" id="returntimestr" name="returntimestr" value="" placeholder="请输入描述" class="layui-input">
+            </div>
+        </div>
+    </div>
+</div>
+<!--数据表格布局-->
+<div class="layuimini-container">
+    <div class="layuimini-main">
+        <!--搜索栏-->
+        <fieldset class="table-search-fieldset">
+            <legend>搜索信息</legend>
+            <div style="margin: 10px 10px 10px 10px">
+                <form class="layui-form layui-form-pane" action="" lay-filter="searchForm">
+                    <div class="layui-form-item">
+                        <div class="layui-inline">
+                            <label class="layui-form-label">用户名</label>
+                            <div class="layui-input-inline">
+                                <select name="userid" id="search_userid" lay-search="">
+                                    <option value="">请选择用户名</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <label class="layui-form-label">书名</label>
+                            <div class="layui-input-inline">
+                                <select name="bookid" id="search_bookid" lay-search="">
+                                    <option value="">请选择书名</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-inline">
+                            <button type="submit" class="layui-btn layui-btn-primary"  lay-submit lay-filter="data-search-btn"><i class="layui-icon"></i> 搜　　索 </button>
+                        </div>
+                        <div class="layui-inline">
+                            <button type="submit" class="layui-btn layui-btn-primary"  lay-submit lay-filter="data-all-btn"><i class="layui-icon"></i> 显示全部 </button>
+                        </div>
+                    </div>
+                </form>
+                <p>某项不选则不作为查询条件。</p>
+            </div>
+        </fieldset>
+        <!--头部工具栏-->
+        <script type="text/html" id="toolbarDemo">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-danger data-delete-btn" lay-event="delete"> 删除选中借阅（谨慎操作！） </button>
+            </div>
+        </script>
+        <!--表格容器-->
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+        <!--行工具栏-->
+        <script type="text/html" id="currentTableBar">
+            <a class="layui-btn layui-btn-danger layui-btn-sm data-count-delete" lay-event="delete">删除</a>
+            <a class="layui-btn layui-btn layui-btn-sm data-count-returnBook" lay-event="returnBook">归还图书</a>
+        </script>
+    </div>
+</div>
+<!--js代码-->
+<script>
+    layui.use(['form', 'table', 'laydate'], function () {
+        var $ = layui.jquery, form = layui.form, table = layui.table, laydate = layui.laydate;
+
+        //获取所有的读者的用户名
+        $.getJSON({
+            url: '../user/queryUsers',
+            success: function (data) {
+                $.each(data,function (i,n) {
+                    $("#edit_userid")
+                            .append("<option value=\""+n.userid+"\">"+n.username+"</option>")
+                });
+                form.render('select','editForm'); //刷新select选择框渲染
+
+                $.each(data,function (i,n) {
+                    $("#search_userid")
+                            .append("<option value=\""+n.userid+"\">"+n.username+"</option>")
+                });
+                form.render('select','searchForm'); //刷新select选择框渲染
+            }
+        });
+
+        // 获取所有书名
+        $.getJSON({
+            url: '../bookInfo/queryBookInfos',
+            success: function (data) {
+                $.each(data,function (i,n) {
+                    $("#edit_bookid")
+                            .append("<option value=\""+n.bookid+"\">"+n.bookname+"</option>")
+                });
+                form.render('select','editForm'); //刷新select选择框渲染
+
+                $.each(data,function (i,n) {
+                    $("#search_bookid")
+                            .append("<option value=\""+n.bookid+"\">"+n.bookname+"</option>")
+                });
+                form.render('select','searchForm'); //刷新select选择框渲染
+            }
+        });
+
+        //加载数据表格
+        table.render({
+            elem: '#currentTableId',
+            url: '../borrow/queryBorrowsByPage',
+            toolbar: '#toolbarDemo',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: "checkbox"},
+                {field: 'borrowid', title: '序号', sort: true},
+                {field: 'username', title: '用户名'},
+                {field: 'bookname', title: '书名'},
+                {field: 'borrowtimestr', title: '借书时间'},
+                {field: 'returntimestr', title: '还书时间'},
+                {title: '操作', minWidth: 150, toolbar: '#currentTableBar', align: "center"}
+            ]],
+            limits: [5, 10, 15, 20, 25, 50, 100],
+            limit: 10,
+            page: {
+                prev: '上一页',
+                next: '下一页',
+            },
+            done: function (res) {
+                console.log(res);
+            },
+            skin: 'line'
+        });
+
+        // 监听搜索操作
+        form.on('submit(data-search-btn)', function (data) {
+            var result = JSON.stringify(data.field);
+            console.log(result);
+            //执行搜索重载
+            table.reload('currentTableId', {
+                url: '../borrow/searchBorrowsByPage',
+                where: {json:result},   //把json传过去
+                page: {curr: 1}, //重新从第 1 页开始
+                done: function (res) {
+                    layer.msg("搜索到"+res.count+"个结果", {time:1000});
+                    return res;
+                }
+            });
+            return false;   //不跳转
+        });
+
+        // 监听显示全部操作
+        form.on('submit(data-all-btn)', function (data) {
+            form.val("searchForm", {
+                'userid':null,
+                'bookid':null
+            });
+            //执行搜索重载
+            table.reload('currentTableId', {
+                url: '../borrow/queryBorrowsByPage',
+                page: {curr: 1}, //重新从第 1 页开始
+                done: null
+            });
+            return false;   //不跳转
+        });
+
+        //toolbar监听事件
+        table.on('toolbar(currentTableFilter)', function (obj) {
+            if (obj.event === 'delete') {  // 监听删除操作
+                layer.confirm('确定要删除选中行吗？', function(index){
+                    var checkStatus = table.checkStatus('currentTableId')
+                        , data = checkStatus.data;
+                    layer.close(index); //关闭提示框
+                    //向服务器请求
+                    $.ajax({
+                        url: '../borrow/deleteBorrows',
+                        type: 'delete',
+                        contentType: "application/json;charset=utf-8",
+                        data: JSON.stringify(data),   //发json过去
+                        success:function (res) {
+                            layer.msg("删除"+res+"行成功！",{time:1000});
+                            //重载表格
+                            table.reload('currentTableId',{page:{curr:1}});
+                        }
+                    });
+                });
+            }
+        });
+
+        table.on('tool(currentTableFilter)', function (obj) {
+            var mdata = obj.data;    //获取该行的数据
+
+            if (obj.event === 'delete') {    //监听删除按钮
+                var returntimestr = mdata.returntimestr
+                if(returntimestr === null) {
+                    layer.msg("必须还书后才能删除！")
+                    return false
+                }
+                layer.confirm('如果要删除借阅记录，必须先还书且删除后将不能恢复，确定要删除该行吗？', {icon: 0} , function (index) {
+                    layer.close(index); //关闭窗口
+                    //向服务器请求
+                    $.ajax({
+                        url: '../borrow/deleteBorrow',
+                        type: 'delete',
+                        contentType: "application/json;charset=utf-8",
+                        data: JSON.stringify(mdata),   //发json过去
+                        success:function (res) {
+                            if(res === 0) layer.msg("删除失败！",{time:1000});
+                            else {
+                                layer.msg("删除"+res+"行成功！",{time:1000});
+                                obj.del();  //删除对应行（tr）的DOM结构，并更新缓存
+                            }
+                        }
+                    });
+                });
+            } else if (obj.event === 'returnBook') {    //监听还书按钮
+                // 已经还过书的不能还书了
+                if(mdata.returntimestr !== null) {
+                    layer.msg('您已经还过书了!', {time: 1000});
+                    return;
+                }
+                var borrowid = mdata.borrowid;
+                var bookid = mdata.bookid;
+                layer.confirm('您确定要归还图书吗', {
+                    btn: ['确定还书','取消还书'] //按钮
+                }, function(){
+                    $.ajax({
+                        url: '../borrow/returnBook',
+                        data: {
+                            borrowid: borrowid,
+                            bookid: bookid
+                        },
+                        type: 'post',
+                        datatype: 'json',
+                        success: function (res) {
+                            if(res !== 0) {
+                                layer.msg('还书成功', {time: 1000}, function () {
+                                    table.reload('currentTableId',{page:{curr:1}});
+                                });
+                            }
+                            else layer.msg('还书失败，请联系管理员', {time: 1000});
+                        }
+                    });
+                }, function(){
+                    // 取消回调
+                });
+
+                return false;
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

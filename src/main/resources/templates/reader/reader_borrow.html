@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>在线借阅平台</title>
+
+    <style>
+        .my-big-title{
+            height: 60px; line-height: 60px; font-size: 24px; padding-left: 30px;
+        }
+        .my-nav{
+            float: right;
+        }
+        .my-main-body{
+            color: #898989; font-size: 16px; margin: 30px
+        }
+        .my-book-item{
+            padding: 10px
+        }
+        .my-book-name{
+            font-size: 24px; color: black;
+        }
+        .my-button{
+            margin-top: 5px;
+        }
+        .my-img-size{
+            width: 150px; height: 200px;
+        }
+        .my-book-isBorrowed{    /*动态使用，千万别删*/
+            color: red;
+        }
+        .my-book-isNotBorrowed{ /*动态使用，千万别删*/
+            color: green;
+        }
+        /*单行文本的溢出显示省略号*/
+        .pl{
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space: nowrap;/*加宽度width属来兼容部分浏览*/
+        }
+        /*多行文本溢出显示省略号*/
+        .p2{
+            overflow:hidden;
+            text-overflow:ellipsis;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            /*-webkit-line-clamp用来限制在一个块元素显示的文本的行数。 为了实现该效果，它需要组合其他的WebKit属性。常见结合属性：
+            display: -webkit-box; 必须结合的属性 ，将对象作为弹性伸缩盒子模型显示 。
+            -webkit-box-orient 必须结合的属性，设置或检索伸缩盒对象的子元素的排列方式 。*/
+        }
+    </style>
+
+    <!-- 导入layui css -->
+    <link rel="stylesheet" href="../layuimini/lib/layui-v2.6.3/css/layui.css" media="all">
+
+    <!-- 导入layui js -->
+    <script src="../layuimini/lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="layui-container">
+    <div class="layui-row" style="background-color: #009688; color: white">
+        <div class="layui-col-md5 my-big-title">
+            <img src="http://wangpeng-imgsubmit.oss-cn-hangzhou.aliyuncs.com/img/202111112258460.png" style="height: 45px">
+            图书管理系统—在线借阅平台
+        </div>
+        <div class="layui-col-md7">
+            <ul class="layui-nav layui-bg-green my-nav">
+                <li class="layui-nav-item">
+                    <a href="./reader_book_list.html">全部图书</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="./reader_book_classification.html">图书分类</a>
+                </li>
+                <li class="layui-nav-item layui-this">
+                    <a href="./reader_borrow.html">我的借阅</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;" id="my-about">关于</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><span id="my_name">未登录</span></a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="./reader_password.html">修改密码</a></dd>
+                        <dd><a href="javascript:;" id="login-out">退出登录</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="my-main-body">
+
+        <fieldset class="layui-elem-field layui-field-title">
+            <legend>我的借阅</legend>
+        </fieldset>
+
+        <!--表格容器-->
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+        <!--行工具栏-->
+        <script type="text/html" id="currentTableBar">
+            <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="my_return">我要还书</a>
+        </script>
+
+    </div>
+
+</div>
+
+<script>
+    layui.use(['form', 'table', 'laydate'], function () {
+        var $ = layui.jquery,
+                form = layui.form,
+                table = layui.table,
+                layer = layui.layer,
+                laydate = layui.laydate;
+
+        var objUserid;
+        $.ajax({
+            url: '../user/reader/getUser',
+            type: 'post',
+            datatype: 'json',
+            success: function (userObj) {
+                console.log(userObj);
+                $("#my_name").text(userObj.username);
+                objUserid = userObj.userid;
+
+                //加载数据表格
+                table.render({
+                    elem: '#currentTableId',
+                    url: '../borrow/reader/queryBorrowsByPageByReader?' + 'userid=' + objUserid,
+                    cols: [[
+                        {field: 'borrowid', title: '序号', sort: true},
+                        {field: 'username', title: '用户名'},
+                        {field: 'bookname', title: '书名'},
+                        {field: 'borrowtimestr', title: '借书时间'},
+                        {field: 'returntimestr', title: '还书时间'},
+                        {title: '操作', minWidth: 150, toolbar: '#currentTableBar', align: "center"}
+                    ]],
+                    limits: [5, 10, 15, 20, 25, 50, 100],
+                    limit: 15,
+                    page: {
+                        prev: '上一页',
+                        next: '下一页',
+                    },
+                    done: function (res) {
+                        console.log(res);
+                    },
+                    skin: 'line'
+                });
+            }
+        });
+
+        $('#login-out').on("click", function () {
+            $.ajax({
+                url: '../user/reader/exitLogin',
+                type: 'get',
+                success: function () {
+                    layer.msg('退出登录成功', {time:1000}, function () {
+                        window.location = '../index.html';
+                    });
+                }
+            });
+        });
+
+        $('#my-about').on("click", function () {
+            layer.open({
+                title: '关于信息',
+                content: '系统名称：图书管理系统<br>作者：江苏第二师范学院 数学与信息技术学院 王鹏<br>联系QQ：894176237',
+                end: function () {
+                    location.reload();
+                }
+            });
+        });
+
+        table.on('tool(currentTableFilter)', function (obj) {
+            if (obj.event === 'my_return') { //监听还书按钮
+                var mdata = obj.data;   //获取该行的数据
+
+                // 已经还过书的不能还书了
+                if(mdata.returntimestr !== null) {
+                    layer.msg('您已经还过书了!', {time: 1000});
+                    return;
+                }
+
+                var borrowid = mdata.borrowid;
+                var bookid = mdata.bookid;
+
+                layer.confirm('您确定要还书吗', {
+                    btn: ['确定','取消'] //按钮
+                }, function(){
+                    $.ajax({
+                        url: '../borrow/reader/returnBook',
+                        data: {
+                            borrowid: borrowid,
+                            bookid: bookid
+                        },
+                        type: 'post',
+                        datatype: 'json',
+                        success: function (res) {
+                            if(res !== 0) {
+                                layer.msg('还书成功', {time: 1000}, function () {
+                                        location.reload();
+                                    });
+                            }
+                            else layer.msg('还书失败，请联系管理员', {time: 1000});
+                        }
+                    });
+                }, function(){
+                    // 取消回调
+                });
+
+                return false;
+            }
+        });
+
+    });
+</script>
+
+</body>
+</html>

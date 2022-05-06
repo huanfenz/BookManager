@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>在线借阅平台</title>
+
+    <style>
+        .my-big-title{
+            height: 60px; line-height: 60px; font-size: 24px; padding-left: 30px;
+        }
+        .my-nav{
+            float: right;
+        }
+        .my-main-body{
+            color: #898989; font-size: 16px; margin: 30px
+        }
+        .my-book-item{
+            padding: 10px
+        }
+        .my-book-name{
+            font-size: 24px; color: black;
+        }
+        .my-button{
+            margin-top: 5px;
+        }
+        .my-img-size{
+            width: 150px; height: 200px;
+        }
+        .my-book-isBorrowed{
+            color: red;
+        }
+        .my-book-isNotBorrowed{
+            color: green;
+        }
+        /*单行文本的溢出显示省略号*/
+        .pl{
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space: nowrap;/*加宽度width属来兼容部分浏览*/
+        }
+        /*多行文本溢出显示省略号*/
+        .p2{
+            overflow:hidden;
+            text-overflow:ellipsis;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            /*-webkit-line-clamp用来限制在一个块元素显示的文本的行数。 为了实现该效果，它需要组合其他的WebKit属性。常见结合属性：
+            display: -webkit-box; 必须结合的属性 ，将对象作为弹性伸缩盒子模型显示 。
+            -webkit-box-orient 必须结合的属性，设置或检索伸缩盒对象的子元素的排列方式 。*/
+        }
+    </style>
+
+    <!-- 导入layui css -->
+    <link rel="stylesheet" href="../layuimini/lib/layui-v2.6.3/css/layui.css" media="all">
+
+    <!-- 导入layui js -->
+    <script src="../layuimini/lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="layui-container">
+    <div class="layui-row" style="background-color: #009688; color: white">
+        <div class="layui-col-md5 my-big-title">
+            <img src="http://wangpeng-imgsubmit.oss-cn-hangzhou.aliyuncs.com/img/202111112258460.png" style="height: 45px">
+            图书管理系统—在线借阅平台
+        </div>
+        <div class="layui-col-md7">
+            <ul class="layui-nav layui-bg-green my-nav">
+                <li class="layui-nav-item">
+                    <a href="./reader_book_list.html">全部图书</a>
+                </li>
+                <li class="layui-nav-item layui-this">
+                    <a href="./reader_book_classification.html">图书分类</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="./reader_borrow.html">我的借阅</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;" id="my-about">关于</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><span id="my_name">未登录</span></a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="./reader_password.html">修改密码</a></dd>
+                        <dd><a href="javascript:;" id="login-out">退出登录</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="my-main-body">
+
+        <fieldset class="layui-elem-field layui-field-title">
+            <legend>图书分类（点击对应分类查看书籍）</legend>
+        </fieldset>
+
+        <div class="layui-row" style="margin-bottom: 20px">
+            <span class="layui-breadcrumb" id="my_type">
+<!--                <a href="./reader_book_classification.html?booktypeid=1">计算机科学</a>-->
+            </span>
+        </div>
+
+        <div class="layui-row" id="my_content">
+            <!--动态添加内容-->
+        </div>
+
+        <div id="my_page"></div>
+
+    </div>
+
+</div>
+
+<script>
+    function getQueryVariable(variable)
+    {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i=0;i<vars.length;i++) {
+            var pair = vars[i].split("=");
+            if(pair[0] === variable){return pair[1];}
+        }
+        return null;
+    }
+
+    layui.use(['laypage', 'form'], function(){
+        var laypage = layui.laypage,
+                layer = layui.layer,
+                form = layui.form,
+                $ = layui.$;
+
+        var objUserid;
+        $.ajax({
+            url: '../user/reader/getUser',
+            type: 'post',
+            datatype: 'json',
+            success: function (userObj) {
+                $("#my_name").text(userObj.username);
+                objUserid = userObj.userid;
+            }
+        });
+
+        $("#login-out").on("click", function () {
+            $.ajax({
+                url: '../user/reader/exitLogin',
+                type: 'get',
+                success: function () {
+                    layer.msg('退出登录成功', {time:1000}, function () {
+                        window.location = '../index.html';
+                    });
+                }
+            });
+        });
+
+        $("#my-about").on("click", function () {
+            layer.open({
+                title: '关于信息',
+                content: '系统名称：图书管理系统<br>作者：江苏第二师范学院 数学与信息技术学院 王鹏<br>联系QQ：894176237',
+                end: function () {
+                    location.reload();
+                }
+            });
+        });
+
+        $.ajax({
+            url: '../bookType/reader/queryBookTypes',
+            type: 'get',
+            datatype: 'json',
+            success: function (mdata) {
+                console.log(mdata);
+                $("#my_type").html("");
+                for(var i = 0; i < mdata.length; i++) {
+                    $("#my_type").append("<a href=\"./reader_book_classification.html?booktypeid=" + mdata[i].booktypeid + "\">" + mdata[i].booktypename + "</a>")
+                    if(i !== mdata.length - 1)$("#my_type").append("<span> | </span>");
+                }
+            }
+        });
+
+        var paramBookTypeid = decodeURI(getQueryVariable('booktypeid'));
+
+        // 先从服务器中获取数据的总数，初始化数据
+        if(paramBookTypeid !== "null") {
+            $.ajax({
+                url: '../bookInfo/reader/getCountByType',
+                data: {
+                    booktypeid: paramBookTypeid
+                },
+                type: 'get',
+                datatype: 'json',
+                success: function (bookCount) {
+                    //执行一个laypage实例
+                    laypage.render({
+                        elem: 'my_page', //注意，这里的 test1 是 ID，不用加 # 号
+                        count: bookCount, //数据总数，从服务端得到
+                        limit: 6,
+                        limits: [4, 6, 8, 10, 12, 14, 16, 18, 20],
+                        layout: ['prev', 'page', 'next', 'limit', 'skip', 'count'],
+                        jump: function(obj, first){
+                            //obj包含了当前分页的所有参数，比如：
+                            console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+                            console.log(obj.limit); //得到每页显示的条数
+                            $.ajax({
+                                url: '../bookInfo/reader/queryBookInfosByPageByType',
+                                data: {
+                                    page: obj.curr,
+                                    limit: obj.limit,
+                                    booktypeid: paramBookTypeid
+                                },
+                                type: 'get',
+                                datatype: 'json',
+                                success: function (res) {
+                                    console.log(res);
+                                    var mdata = res.data;
+                                    $("#my_content").html("");
+                                    for(var i = 0; i < mdata.length; i++) {
+                                        var colorClass, word, buttonClass;
+                                        if (mdata[i].isborrowed === 1) {
+                                            colorClass = "my-book-isBorrowed";
+                                            word = "已借出";
+                                            buttonClass = "layui-btn-disabled";
+                                        } else {
+                                            colorClass = "my-book-isNotBorrowed";
+                                            word = "可以借";
+                                            buttonClass = "";
+                                        }
+                                        $("#my_content").append("<div class=\"layui-inline layui-col-md6 my-book-item\">\n" +
+                                                "                <div class=\"layui-col-md4\">\n" +
+                                                "                    <img class=\"my-img-size\" src=\"" + mdata[i].bookimg + "\">\n" +
+                                                "                </div>\n" +
+                                                "                <div class=\"layui-col-md8\">\n" +
+                                                "                    <p class=\"p1\"><a href=\"#\"><span class=\"my-book-name\">" + mdata[i].bookname + "</span></a></p>\n" +
+                                                "                    <p class=\"p1\">作者：" + mdata[i].bookauthor + "</span></p>\n" +
+                                                "                    <p class=\"p1\">价格：" + mdata[i].bookprice + "</span></p>\n" +
+                                                "                    <p class=\"p1\">分类：" + mdata[i].booktypename + "</span></p>\n" +
+                                                "                    <p class=\"p2\" title=\"" + mdata[i].bookdesc + "\">描述：" + mdata[i].bookdesc + "</span></p>\n" +
+                                                "                    <p class=\"p1\">借出情况：<span class=\"" + colorClass + "\">" + word + "</span></p>\n" +
+                                                "                    <button class=\"layui-btn my-button my-borrow-button " + buttonClass + "\" bookid=\"" + mdata[i].bookid + "\">我要借书</button>\n" +
+                                                "                </div>\n" +
+                                                "            </div>\n");
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        $(document).on('click','.my-borrow-button',function(){
+            var bookid = $(this).attr("bookid");
+            // 如果是disabled不响应监听
+            if($(this).hasClass('layui-btn-disabled')) return;
+
+            layer.confirm('您确定要借书吗', {
+                btn: ['确定','取消'] //按钮
+            }, function(){
+                $.ajax({
+                    url: '../borrow/reader/borrowBook',
+                    data: {
+                        userid: objUserid,
+                        bookid: bookid
+                    },
+                    type: 'post',
+                    datatype: 'json',
+                    success: function (res) {
+                        if(res !== 0) {
+                            layer.msg('借书成功', {time: 1000}, function () {
+                                location.reload();
+                            });
+                        }
+                        else layer.msg('借书失败，可能书被其他同学借走了，请刷新页面重试!', {time: 3000});
+                    }
+                });
+            }, function(){
+                // 取消回调
+            });
+        });
+
+    });
+
+</script>
+
+</body>
+</html>
