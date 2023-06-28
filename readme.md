@@ -32,19 +32,22 @@
 
 登录界面
 
-![image-20211121193235739](http://wangpeng-imgsubmit.oss-cn-hangzhou.aliyuncs.com/img/202111211932813.png)
+![bm1](https://github.com/huanfenz/BookManager/assets/49386166/9cd81a23-f43b-47f0-b6dc-e8640aadf289)
+
 
 图书借阅
 
-![image-20211121193322179](http://wangpeng-imgsubmit.oss-cn-hangzhou.aliyuncs.com/img/202111211933278.png)
+![bm2](https://github.com/huanfenz/BookManager/assets/49386166/698febc2-5d31-4435-8c43-ef401d1a7e81)
+
 
 我的借阅
 
-![image-20211121193349938](http://wangpeng-imgsubmit.oss-cn-hangzhou.aliyuncs.com/img/202111211933981.png)
+![bm3](https://github.com/huanfenz/BookManager/assets/49386166/b8b54654-19b0-4df3-9ef2-7590d01378d3)
+
 
 管理员界面
 
-![image-20211121193435288](http://wangpeng-imgsubmit.oss-cn-hangzhou.aliyuncs.com/img/202111211934347.png)
+![bm4](https://github.com/huanfenz/BookManager/assets/49386166/67ba9d09-8723-43b9-b42a-1f5d671bb2c9)
 
 更多功能就在演示地址自己看吧！:smile:
 
@@ -62,16 +65,17 @@
 
 ### 数据库结构
 
-![Diagram 1](http://wangpeng-imgsubmit.oss-cn-hangzhou.aliyuncs.com/img/202111211945265.jpg)
+![bm5](https://github.com/huanfenz/BookManager/assets/49386166/dbb05da1-8951-41d1-8585-ea46cca153ec)
+
 
 ## 联系方式
 
-我的博客地址：[个人博客](http://huanfenz.top)，[CSDN博客](https://blog.csdn.net/qq_34245098?spm=1000.2115.3001.5343)。欢迎大家来踩。
+我的博客地址：[个人博客](http://huanfenz.top)。欢迎大家来踩。
 
 我的联系方式，欢迎联系我：
 
 *   邮箱：`huanfenz@qq.com`
-*   QQ：`894176237`
+
 
 
 
